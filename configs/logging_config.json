@@ -1,0 +1,11 @@
+{
+    "global_level": "DEBUG",
+    "file": "app.log",
+    "max_size_mb": 2,
+    "backup_count": 5,
+    "file_level": "DEBUG",
+    "console_level": "INFO",
+    "use_time_rotation": false,
+    "log_format": "%(asctime)s - %(levelname)s - [%(filename)s: Line %(lineno)d] - %(process)d - %(threadName)s - %(message)s",
+    "log_folder": "logs"
+}
