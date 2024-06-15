@@ -33,6 +33,17 @@ sf.concatenate_and_deduplicate_symbols(['nasdaq', 'nyse'], 'custom_combined_symb
 custom_combined_symbols = sf.load_all_symbols()
 print("Custom Combined Symbols:", custom_combined_symbols)
 
+# Example: Fetch the Fortune 500 list from the Wikipedia page
+fortune500_df = sf.fetch_fortune500_list()
+print("Fortune 500 List:\n", fortune500_df)
+
+# Example: Save the fetched Fortune 500 list to a file
+sf.save_fortune500_list(fortune500_df)
+
+# Example: Load the saved Fortune 500 list from a file
+loaded_fortune500_df = sf.load_fortune500_list()
+print("Loaded Fortune 500 List:\n", loaded_fortune500_df)
+
 # Full Example Workflow
 print("\n--- Full Example Workflow ---")
 
@@ -59,3 +70,11 @@ sf.concatenate_and_deduplicate_symbols(['nasdaq', 'nyse'], 'custom_combined_symb
 # Load and print custom combined symbols
 custom_combined_symbols = sf.load_all_symbols()
 print("Custom Combined Symbols:", custom_combined_symbols)
+
+# Fetch, save, and load the Fortune 500 list
+fortune500_df = sf.fetch_fortune500_list()
+if not fortune500_df.empty:
+    sf.save_fortune500_list(fortune500_df)
+    loaded_fortune500_df = sf.load_fortune500_list()
+    if loaded_fortune500_df is not None:
+        print("Fetched and saved Fortune 500 list:\n", loaded_fortune500_df)
