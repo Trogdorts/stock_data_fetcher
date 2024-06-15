@@ -1,6 +1,7 @@
 import requests
 import json
 import logging
+import pandas as pd
 from pathlib import Path
 from typing import List, Dict, Optional, Callable
 from stock_data_fetcher.logging_handler import LoggingHandler
@@ -18,6 +19,7 @@ class SymbolFetcher:
         self.base_dir = Path(__file__).resolve().parent.parent
         self.data_dir = self.base_dir / 'data'
         self.symbols_dir = self.data_dir / 'symbols'
+        self.fortune500_dir = self.symbols_dir / 'fortune500'
         self.user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:85.0) Gecko/20100101 Firefox/85.0'
         self.exchanges = ['nasdaq', 'nyse', 'amex']
         self._ensure_directories_exist()
@@ -26,9 +28,10 @@ class SymbolFetcher:
         """
         Ensure that the necessary directories exist.
 
-        Creates the symbols directory if it does not exist.
+        Creates the symbols and fortune500 directories if they do not exist.
         """
         self.symbols_dir.mkdir(parents=True, exist_ok=True)
+        self.fortune500_dir.mkdir(parents=True, exist_ok=True)
 
     def fetch_exchange_symbols(self, exchange: str) -> Optional[Dict]:
         """
@@ -188,9 +191,67 @@ class SymbolFetcher:
         """
         return self.exchanges
 
+    def fetch_fortune500_list(self, url: str = 'https://en.wikipedia.org/wiki/List_of_S%26P_500_companies') -> pd.DataFrame:
+        """
+        Fetch the list of Fortune 500 companies from a given URL.
+
+        Args:
+            url (str): The URL to fetch the list from.
+
+        Returns:
+            pd.DataFrame: The DataFrame containing the list of Fortune 500 companies.
+        """
+        try:
+            html = pd.read_html(url, header=0)
+            return html[0]
+        except Exception as e:
+            logging.error(f"Failed to fetch Fortune 500 list from {url}: {e}")
+            return pd.DataFrame()
+
+    def save_fortune500_list(self, df: pd.DataFrame):
+        """
+        Save the Fortune 500 list to a JSON file.
+
+        Args:
+            df (pd.DataFrame): The DataFrame containing the Fortune 500 list.
+        """
+        file_path = self.fortune500_dir / 'fortune500_list.json'
+        try:
+            df.to_json(file_path, orient='records', indent=4)
+            logging.info(f"Saved Fortune 500 list to {file_path}")
+        except OSError as e:
+            logging.error(f"Failed to save Fortune 500 list to {file_path}: {e}")
+
+    def load_fortune500_list(self) -> Optional[pd.DataFrame]:
+        """
+        Load the saved Fortune 500 list from a JSON file.
+
+        Returns:
+            Optional[pd.DataFrame]: The DataFrame containing the Fortune 500 list,
+                                    or None if the file does not exist or cannot be read.
+        """
+        file_path = self.fortune500_dir / 'fortune500_list.json'
+        if file_path.exists():
+            try:
+                return pd.read_json(file_path)
+            except Exception as e:
+                logging.error(f"Error reading Fortune 500 list from {file_path}: {e}")
+                return None
+        else:
+            logging.warning(f"Fortune 500 list file not found.")
+            return None
+
 if __name__ == "__main__":
     sf = SymbolFetcher()
     sf.fetch_and_save_all_symbols()
     all_symbols = sf.load_all_symbols()
     if all_symbols:
         print("Fetched and saved symbols for all exchanges:", all_symbols)
+
+    # Fetch, save, and load Fortune 500 list
+    fortune500_df = sf.fetch_fortune500_list()
+    if not fortune500_df.empty:
+        sf.save_fortune500_list(fortune500_df)
+        loaded_fortune500_df = sf.load_fortune500_list()
+        if loaded_fortune500_df is not None:
+            print("Fetched and saved Fortune 500 list:", loaded_fortune500_df)
